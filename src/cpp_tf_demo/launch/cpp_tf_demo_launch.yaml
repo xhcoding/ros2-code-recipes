@@ -1,0 +1,17 @@
+%YAML 1.2
+---
+launch:
+  - node:
+      pkg: "cpp_tf_demo"
+      exec: "cpp_static_tf"
+      output: "screen"
+
+  - node:
+      pkg: "cpp_tf_demo"
+      exec: "cpp_dynamic_tf"
+      output: "screen"
+
+  - node:
+      pkg: "cpp_tf_demo"
+      exec: "cpp_listen_tf"
+      output: "screen"

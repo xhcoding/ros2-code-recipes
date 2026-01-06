@@ -1,0 +1,12 @@
+%YAML 1.2
+---
+launch:
+  - node:
+      pkg: "cpp_topic_publish_demo"
+      exec: "cpp_topic_publish_demo"
+      output: "screen"
+
+  - node:
+      pkg: "cpp_topic_subscribe_demo"
+      exec: "cpp_topic_subscribe_demo"
+      output: "screen"

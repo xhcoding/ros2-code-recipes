@@ -11,7 +11,7 @@ find_package(ament_cmake REQUIRED)
 # further dependencies manually.
 find_package(rclcpp REQUIRED)
 
-add_executable(cpp_node src/cpp_node)
+add_executable(cpp_node src/cpp_node.cpp)
 
 ament_target_dependencies(cpp_node rclcpp)
 

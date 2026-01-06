@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(demo_interfaces)
+project(cpp_tf_demo)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -7,14 +7,30 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
-rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/Demo.msg"
-  "srv/AddInt.srv"
-  DEPENDENCIES std_msgs
+add_executable(cpp_static_tf src/cpp_static_tf.cpp)
+ament_target_dependencies(cpp_static_tf rclcpp tf2_ros geometry_msgs tf2_geometry_msgs)
+
+add_executable(cpp_dynamic_tf src/cpp_dynamic_tf.cpp)
+ament_target_dependencies(cpp_dynamic_tf rclcpp tf2_ros geometry_msgs tf2_geometry_msgs)
+
+add_executable(cpp_listen_tf src/cpp_listen_tf.cpp)
+ament_target_dependencies(cpp_listen_tf rclcpp tf2_ros geometry_msgs tf2_geometry_msgs)
+
+install(TARGETS
+  cpp_static_tf
+  cpp_dynamic_tf
+  cpp_listen_tf
+  DESTINATION lib/${PROJECT_NAME})
+
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
 )
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
