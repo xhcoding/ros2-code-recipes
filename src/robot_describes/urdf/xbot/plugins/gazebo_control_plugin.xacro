@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="gazebo_control_plugin">
+    <gazebo>
+      <!-- 两轮差速插件 -->
+      <plugin name='gz::sim::systems::DiffDrive' filename='gz-sim-diff-drive-system'>
+
+        <!-- 左右轮子 -->
+        <left_joint>left_wheel_joint</left_joint>
+        <right_joint>right_wheel_joint</right_joint>
+
+        <!-- 轮子之间的距离 -->
+        <wheel_separation>0.2</wheel_separation>
+        <!-- 轮子的半径 -->
+        <wheel_radius>0.032</wheel_radius>
+
+        <!-- 里程计 -->
+        <frame_id>odom</frame_id>
+        <!-- tf 转换， odom 转换到 base_footprint -->
+        <child_frame_id>base_footprint</child_frame_id>
+
+        <!-- 接受控制的 topic -->
+        <topic>/cmd_vel</topic>
+        <!-- 发布里程的 topic -->
+        <odom_topic>/odometry</odom_topic>
+        <!-- tf 转换的 topic -->
+        <tf_topic>/tf</tf_topic>
+
+      </plugin>
+
+      <!-- 发布关节状态 -->
+      <plugin name='gz::sim::systems::JointStatePublisher' filename='gz-sim-joint-state-publisher-system'>
+        <topic>/joint_states</topic>
+        <left_joint>left_wheel_joint</left_joint>
+        <right_joint>right_wheel_joint</right_joint>
+      </plugin>
+    </gazebo>
+    
+  </xacro:macro>
+</robot>

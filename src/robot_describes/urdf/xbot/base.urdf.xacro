@@ -3,7 +3,7 @@
   <xacro:include filename="$(find robot_describes)/urdf/xbot/common_inertia.xacro"/>
   <xacro:macro name="base_xacro" params="length radius">
     <!-- 虚拟部件 -->
-    <link name="base_footprint_link"/>
+    <link name="base_footprint"/>
     
     <!-- 机器人身体部分 -->
     <link name="base_link">
@@ -37,7 +37,7 @@
       <xacro:cylinder_inertia m="1.0" r="${radius}" h="${length}"/>
     </link>
     <joint name="base_footprint_joint" type="fixed">
-      <parent link="base_footprint_link"/>
+      <parent link="base_footprint"/>
       <child link="base_link"/>
       <origin xyz="0.0 0.0 ${length / 2.0 + 0.032 - 0.001}" rpy="0.0 0.0 0.0"/>
     </joint>

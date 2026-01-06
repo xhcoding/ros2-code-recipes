@@ -33,5 +33,16 @@
       <!-- 固定的位置 -->
       <origin xyz="${xyz}" rpy="0.0 0.0 0.0"/>
     </joint>
+
+    <gazebo reference="${caster_name}_link">
+      <!-- 切向摩擦系数 -->
+      <mu1 value="0.0"/>
+      <!-- 法向摩擦系数 -->
+      <mu2 value="0.0"/>
+      <!-- 刚度系数 -->
+      <kp value="1000000000.0"/>
+      <!-- 阻尼系数 -->
+      <kd value="1.0"/>
+    </gazebo>
   </xacro:macro>
 </robot>

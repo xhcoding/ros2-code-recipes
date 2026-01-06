@@ -8,8 +8,8 @@
         <geometry>
           <box size="0.02 0.10 0.02" />
         </geometry>
-        <material name="black">
-          <color rgba="0.0 0.0 0.0 1.0" />
+        <material name="green">
+          <color rgba="0.0 1.0 0.0 1.0" />
         </material>
       </visual>
       <collision>
@@ -17,8 +17,8 @@
         <geometry>
           <box size="0.02 0.10 0.02" />
         </geometry>
-        <material name="black">
-          <color rgba="0.0 0.0 0.0 1.0" />
+        <material name="green">
+          <color rgba="0.0 1.0 0.0 1.0" />
         </material>
       </collision>
       <xacro:box_inertia m="0.1" w="0.02" h="0.10" d="0.02"/>
