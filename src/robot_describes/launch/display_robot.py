@@ -8,7 +8,7 @@ from launch.actions import DeclareLaunchArgument
 
 def generate_launch_description():
     share_dir = FindPackageShare("robot_describes")
-    default_model_path = PathJoinSubstitution([share_dir, "urdf", "first_robot.urdf"])
+    default_model_path = PathJoinSubstitution([share_dir, "urdf", "xbot", "xbot.urdf.xacro"])
     default_config_path =PathJoinSubstitution([share_dir, "config", "display_robot.rviz"])
     
     model_path = LaunchConfiguration("model", default=default_model_path)
