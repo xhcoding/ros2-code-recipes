@@ -3,7 +3,7 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
-from launch.substitutions import FileContent, PathJoinSubstitution, LaunchConfiguration
+from launch.substitutions import PathJoinSubstitution, LaunchConfiguration, Command
 from launch.actions import DeclareLaunchArgument
 
 def generate_launch_description():
@@ -14,7 +14,7 @@ def generate_launch_description():
     model_path = LaunchConfiguration("model", default=default_model_path)
     config_path = LaunchConfiguration("config", default=default_config_path)
     
-    urdf = FileContent(model_path)
+    urdf = Command(["xacro ", model_path])
     
     robot_state_publisher = Node(
         package="robot_state_publisher",
