@@ -51,7 +51,6 @@ def generate_launch_description():
         executable="rviz2",
         arguments=["-d", rviz_config_path]
     )
-
     
     return LaunchDescription([
         DeclareLaunchArgument("model", default_value=default_model_path, description="模型路径"),
