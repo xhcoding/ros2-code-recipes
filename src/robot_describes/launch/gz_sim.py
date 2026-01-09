@@ -14,23 +14,13 @@ from ros_gz_bridge.actions import RosGzBridge
 def is_in_wsl():
     return "WSLENV" in os.environ
 
-def reset_gazebo_simulation():
-    proc = subprocess.Popen(
-        shlex.split("gz service -s /world/xbot/control --reqtype gz.msgs.WorldControl --reptype gz.msgs.Boolean --timeout 3000 --req 'reset: {all: true}'"),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True)
-    stdout, stderr = proc.communicate(timeout=10)
-    print("stdout: " + stdout)
-    print("stderr: " + stderr)
-
 def generate_launch_description():
     share_dir = FindPackageShare("robot_describes")
     default_model_path = PathJoinSubstitution([share_dir, "urdf", "xbot", "xbot.urdf.xacro"])
     bridge_config_path = PathJoinSubstitution([share_dir, "config", "bridge.yaml"])
     default_world_path = PathJoinSubstitution([share_dir, "world", "xbot.sdf"])
     rviz_config_path =PathJoinSubstitution([share_dir, "config", "display_robot.rviz"])
-    
+
     model_path = LaunchConfiguration("model", default=default_model_path)
     
     urdf = Command(["xacro ", model_path])
@@ -48,8 +38,8 @@ def generate_launch_description():
     )
 
     if is_in_wsl():
-        # wsl 环境下手动启动 windows 上的 gazebo ，保持开启
-        reset_gazebo_simulation()
+        # wsl 环境下运行 gazebo
+        _ = subprocess.Popen(["powershell.exe", "run_gazebo.ps1", "d:/Applications/Manual/gazebo/worlds/xbot.sdf"])
         gz_launch = LogInfo(msg="wsl")
     else:
         gz_launch_path = PathJoinSubstitution([FindPackageShare("ros_gz_sim"), 'launch', 'gz_sim.launch.py'])
@@ -76,7 +66,7 @@ def generate_launch_description():
         executable="rviz2",
         arguments=["-d", rviz_config_path]
     )
-    
+
     return LaunchDescription([
         DeclareLaunchArgument("model", default_value=default_model_path, description="模型路径"),
         gz_partition,
@@ -84,7 +74,7 @@ def generate_launch_description():
         gz_launch,
         spawn_entity,
         bridge,
-        rviz2
+        rviz2,
     ])
 
 
