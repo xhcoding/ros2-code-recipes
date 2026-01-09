@@ -1,12 +1,28 @@
 # -*- coding: utf-8 -*-
+import os
+import subprocess
+import shlex
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 from launch.substitutions import PathJoinSubstitution, LaunchConfiguration, Command
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, LogInfo, SetEnvironmentVariable
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ros_gz_bridge.actions import RosGzBridge
+
+def is_in_wsl():
+    return "WSLENV" in os.environ
+
+def reset_gazebo_simulation():
+    proc = subprocess.Popen(
+        shlex.split("gz service -s /world/xbot/control --reqtype gz.msgs.WorldControl --reptype gz.msgs.Boolean --timeout 3000 --req 'reset: {all: true}'"),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True)
+    stdout, stderr = proc.communicate(timeout=10)
+    print("stdout: " + stdout)
+    print("stderr: " + stderr)
 
 def generate_launch_description():
     share_dir = FindPackageShare("robot_describes")
@@ -19,24 +35,9 @@ def generate_launch_description():
     
     urdf = Command(["xacro ", model_path])
     
-    robot_state_publisher = Node(
-        package="robot_state_publisher",
-        executable="robot_state_publisher",
-        parameters=[{"robot_description": ParameterValue(urdf, value_type=str)}],
-        output="screen"
-    )
-    
-    gz_launch_path = PathJoinSubstitution([FindPackageShare("ros_gz_sim"), 'launch', 'gz_sim.launch.py'])
-    gz_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(gz_launch_path),
-        launch_arguments={
-            'gz_args': [default_world_path],
-            'on_exit_shutdown': 'True'
-        }.items(),
-    )
-    
-    bridge = RosGzBridge(bridge_name="xbot_bridge", config_file=bridge_config_path)
-    
+    gz_partition = SetEnvironmentVariable("GZ_PARTITION", "xbot")
+    os.putenv("GZ_PARTITION", "xbot")
+
     spawn_entity = Node(
         package="ros_gz_sim",
         executable="create",
@@ -45,6 +46,30 @@ def generate_launch_description():
             "-topic", "robot_description"
         ]
     )
+
+    if is_in_wsl():
+        # wsl 环境下手动启动 windows 上的 gazebo ，保持开启
+        reset_gazebo_simulation()
+        gz_launch = LogInfo(msg="wsl")
+    else:
+        gz_launch_path = PathJoinSubstitution([FindPackageShare("ros_gz_sim"), 'launch', 'gz_sim.launch.py'])
+        gz_launch = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(gz_launch_path),
+            launch_arguments={
+                'gz_args': [default_world_path],
+                'on_exit_shutdown': 'True'
+            }.items()
+        )
+
+    robot_state_publisher = Node(
+        package="robot_state_publisher",
+        executable="robot_state_publisher",
+        parameters=[{"robot_description": ParameterValue(urdf, value_type=str)}],
+        output="screen"
+    )
+
+    
+    bridge = RosGzBridge(bridge_name="xbot_bridge", config_file=bridge_config_path)
     
     rviz2 = Node(
         package="rviz2",
@@ -54,10 +79,11 @@ def generate_launch_description():
     
     return LaunchDescription([
         DeclareLaunchArgument("model", default_value=default_model_path, description="模型路径"),
+        gz_partition,
         robot_state_publisher,
         gz_launch,
-        bridge,
         spawn_entity,
+        bridge,
         rviz2
     ])
 
