@@ -1,18 +1,32 @@
 # -*- coding: utf-8 -*-
 import os
 import subprocess
-import shlex
 from launch import LaunchDescription
+from launch.launch_service import OnShutdown
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 from launch.substitutions import PathJoinSubstitution, LaunchConfiguration, Command
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, LogInfo, SetEnvironmentVariable
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, LogInfo, RegisterEventHandler, SetEnvironmentVariable
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ros_gz_bridge.actions import RosGzBridge
 
 def is_in_wsl():
     return "WSLENV" in os.environ
+
+gazebo_pid = "";
+
+def run_gazebo():
+    global gazebo_pid
+    result = subprocess.run(["powershell.exe", "-Command", "Start-Process", "-FilePath", "powershell.exe", "-ArgumentList", "run_gazebo.ps1","-PassThru"], capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError("start gazebo failed")
+    gazebo_pid = result.stdout.splitlines()[3].split()[5].strip()
+    print("gazebo pid: " + gazebo_pid)
+
+def stop_gazebo():
+    global gazebo_pid
+    _ = subprocess.run(["taskkill.exe", "/PID",  gazebo_pid, "/F", "/T"])
 
 def generate_launch_description():
     share_dir = FindPackageShare("robot_describes")
@@ -22,9 +36,9 @@ def generate_launch_description():
     rviz_config_path =PathJoinSubstitution([share_dir, "config", "display_robot.rviz"])
 
     model_path = LaunchConfiguration("model", default=default_model_path)
-    
+
     urdf = Command(["xacro ", model_path])
-    
+
     gz_partition = SetEnvironmentVariable("GZ_PARTITION", "xbot")
     os.putenv("GZ_PARTITION", "xbot")
 
@@ -39,7 +53,7 @@ def generate_launch_description():
 
     if is_in_wsl():
         # wsl 环境下运行 gazebo
-        _ = subprocess.Popen(["powershell.exe", "run_gazebo.ps1", "d:/Applications/Manual/gazebo/worlds/xbot.sdf"])
+        run_gazebo()
         gz_launch = LogInfo(msg="wsl")
     else:
         gz_launch_path = PathJoinSubstitution([FindPackageShare("ros_gz_sim"), 'launch', 'gz_sim.launch.py'])
@@ -58,14 +72,18 @@ def generate_launch_description():
         output="screen"
     )
 
-    
+
     bridge = RosGzBridge(bridge_name="xbot_bridge", config_file=bridge_config_path)
-    
+
     rviz2 = Node(
         package="rviz2",
         executable="rviz2",
         arguments=["-d", rviz_config_path]
     )
+
+    def on_shutdown_handler(event, context):
+        if gazebo_pid:
+            stop_gazebo()
 
     return LaunchDescription([
         DeclareLaunchArgument("model", default_value=default_model_path, description="模型路径"),
@@ -75,6 +93,5 @@ def generate_launch_description():
         spawn_entity,
         bridge,
         rviz2,
+        RegisterEventHandler(OnShutdown(on_shutdown=on_shutdown_handler))
     ])
-
-
