@@ -2,6 +2,7 @@
 import os
 import subprocess
 from launch import LaunchDescription
+from launch.event_handlers import OnProcessExit
 from launch.launch_service import OnShutdown
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
@@ -12,7 +13,9 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ros_gz_bridge.actions import RosGzBridge
 
 def is_in_wsl():
-    return "WSLENV" in os.environ
+    # Looking forward to using ros2_control on Windows.
+    return False
+    # return "WSLENV" in os.environ
 
 gazebo_pid = "";
 
@@ -72,6 +75,23 @@ def generate_launch_description():
         output="screen"
     )
 
+    robot_controllers_config = PathJoinSubstitution(
+        [
+            FindPackageShare('robot_describes'),
+            'config',
+            'diff_drive_controller.yaml',
+        ]
+    )
+
+    diff_drive_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=[
+            "diff_drive_base_controller",
+            "--param-file",
+            robot_controllers_config
+        ]
+    )
 
     bridge = RosGzBridge(bridge_name="xbot_bridge", config_file=bridge_config_path)
 
@@ -93,5 +113,6 @@ def generate_launch_description():
         spawn_entity,
         bridge,
         rviz2,
-        RegisterEventHandler(OnShutdown(on_shutdown=on_shutdown_handler))
+        RegisterEventHandler(OnShutdown(on_shutdown=on_shutdown_handler)),
+        # RegisterEventHandler(OnProcessExit(target_action=spawn_entity, on_exit=[diff_drive_controller_spawner]))
     ])
