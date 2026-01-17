@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from launch.substitutions.text_substitution import TextSubstitution
 import os
 import subprocess
 from launch import LaunchDescription
@@ -63,7 +64,7 @@ def generate_launch_description():
         gz_launch = IncludeLaunchDescription(
             PythonLaunchDescriptionSource(gz_launch_path),
             launch_arguments={
-                'gz_args': [default_world_path],
+                'gz_args': [TextSubstitution(text='-r '), default_world_path],
                 'on_exit_shutdown': 'True'
             }.items()
         )
@@ -83,11 +84,17 @@ def generate_launch_description():
         ]
     )
 
+    joint_state_broadcaster_spawner = Node(
+        package='controller_manager',
+        executable='spawner',
+        arguments=['xbot_joint_state_broadcaster'],
+    )
+
     diff_drive_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
         arguments=[
-            "diff_drive_base_controller",
+            "xbot_diff_drive_controller",
             "--param-file",
             robot_controllers_config
         ]
@@ -114,5 +121,6 @@ def generate_launch_description():
         bridge,
         rviz2,
         RegisterEventHandler(OnShutdown(on_shutdown=on_shutdown_handler)),
-        # RegisterEventHandler(OnProcessExit(target_action=spawn_entity, on_exit=[diff_drive_controller_spawner]))
+        RegisterEventHandler(OnProcessExit(target_action=spawn_entity, on_exit=[joint_state_broadcaster_spawner])),
+        RegisterEventHandler(OnProcessExit(target_action=joint_state_broadcaster_spawner, on_exit=[diff_drive_controller_spawner])),
     ])
