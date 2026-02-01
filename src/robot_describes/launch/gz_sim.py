@@ -5,7 +5,7 @@ import subprocess
 from launch import LaunchDescription
 from launch.event_handlers import OnProcessExit
 from launch.launch_service import OnShutdown
-from launch_ros.actions import Node
+from launch_ros.actions import Node, SetParameter
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 from launch.substitutions import PathJoinSubstitution, LaunchConfiguration, Command
@@ -43,8 +43,7 @@ def generate_launch_description():
 
     urdf = Command(["xacro ", model_path])
 
-    gz_partition = SetEnvironmentVariable("GZ_PARTITION", "xbot")
-    os.putenv("GZ_PARTITION", "xbot")
+    use_sim_time = SetParameter(name="use_sim_time", value=True)
 
     spawn_entity = Node(
         package="ros_gz_sim",
@@ -58,7 +57,12 @@ def generate_launch_description():
         ]
     )
 
+
+    env_set = SetEnvironmentVariable("QT_SCREEN_SCALE_FACTORS", "0")
+
     if is_in_wsl():
+        gz_partition = SetEnvironmentVariable("GZ_PARTITION", "xbot")
+        os.putenv("GZ_PARTITION", "xbot")
         # wsl 环境下运行 gazebo
         run_gazebo()
         gz_launch = LogInfo(msg="wsl")
@@ -117,7 +121,8 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument("model", default_value=default_model_path, description="模型路径"),
-        gz_partition,
+        env_set,
+        use_sim_time,
         robot_state_publisher,
         gz_launch,
         spawn_entity,

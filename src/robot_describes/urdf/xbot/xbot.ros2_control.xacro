@@ -28,6 +28,7 @@
         <parameters>$(find robot_describes)/config/diff_drive_controller.yaml</parameters>
         <ros>
           <remapping>/xbot_diff_drive_controller/cmd_vel:=/cmd_vel</remapping>
+          <remapping>/xbot_diff_drive_controller/odom:=/odom</remapping>
         </ros>
       </plugin>
     </gazebo>
